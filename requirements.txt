@@ -1,0 +1,23 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart==0.0.20
+hrb-common-libs[observability,db,vectorstore,llm,storage,cache] @ git+https://github.com/rvsree/hrb-common-libs.git@v0.4.0
+
+# PDF extraction
+pypdf==6.1.1
+pypdfium2==5.13.0
+pdfplumber==0.11.10
+
+# Chunking - LangChain's own splitters (matches hrb_chatbot_service's own
+# "chunking stays on LangChain" convention, CLAUDE.md)
+langchain-text-splitters==0.3.11
+langchain-experimental==0.3.4
+langchain-openai==0.3.35
+
+# Indexing - LlamaIndex's VectorStoreIndex (matches hrb_chatbot_service's
+# own Phase 44 reversion back to LlamaIndex for indexing specifically)
+llama-index-core==0.13.6
+llama-index-vector-stores-chroma==0.6.0
+llama-index-vector-stores-pinecone==0.9.0
+llama-index-embeddings-openai==0.7.0

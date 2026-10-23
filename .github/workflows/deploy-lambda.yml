@@ -1,0 +1,80 @@
+name: Deploy Lambda
+
+# Deploy-prep skeleton, mirroring hrb_chatbot_service's own deploy-lambda.yml
+# (Phase 88/89 there) and hrb_api_gateway_service's own Phase 8 precedent -
+# inert until the real AWS resources below exist (ECR repo, Lambda function).
+# ECR_REPOSITORY/LAMBDA_FUNCTION_NAME are placeholders - not yet real, not
+# yet provisioned. Real provisioning is a separate, explicitly-approved step.
+#
+# `paths:` is the whole src/rag_ingestion/** tree, not just lambda_handler.py
+# - Dockerfile.lambda COPYs the entire tree into the image (pipeline.py and
+# everything it imports runs inside the Lambda too), so a change anywhere in
+# there can affect what the Lambda actually does.
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "src/rag_ingestion/**"
+      - "Dockerfile.lambda"
+      - "requirements.txt"
+      - ".github/workflows/deploy-lambda.yml"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: PLACEHOLDER.dkr.ecr.us-east-1.amazonaws.com/rag-ingestion-lambda
+  LAMBDA_FUNCTION_NAME: rag-ingestion-index-document
+
+jobs:
+  build-and-deploy-lambda:
+    name: Build, push, and update the Lambda
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} \
+            | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY }}
+
+      - name: Build and push the Lambda image
+        # Same flags as the main app's own build step, same reason - a plain
+        # `docker build` produces an attestation/manifest-list image that
+        # Lambda's CreateFunction/UpdateFunctionCode rejects.
+        run: |
+          docker buildx build \
+            --provenance=false --sbom=false \
+            --output type=image,name=${{ env.ECR_REPOSITORY }}:latest,oci-mediatypes=false,push=true \
+            -f Dockerfile.lambda .
+
+      - name: Update the Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --image-uri ${{ env.ECR_REPOSITORY }}:latest \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for the update to actually finish
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(aws lambda get-function-configuration \
+              --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+              --region ${{ env.AWS_REGION }} --query "LastUpdateStatus" --output text)
+            echo "Lambda LastUpdateStatus: $STATUS (check $i/30)"
+            if [ "$STATUS" = "Successful" ]; then
+              exit 0
+            fi
+            if [ "$STATUS" = "Failed" ]; then
+              echo "::error::Lambda update failed"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "::error::Timed out waiting for the Lambda update to finish"
+          exit 1

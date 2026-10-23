@@ -1,0 +1,32 @@
+# The Phase 2 Lambda handler (lambda_handler.py), as a container image - a
+# zip package can't carry this project's real dependencies (langchain,
+# llama-index, pinecone-client are well past Lambda's 250MB unzipped zip
+# limit); a container image's 10GB limit fits easily. Ported from
+# hrb_chatbot_service's own Dockerfile.lambda (Phase 88 there) - this repo
+# needs no spacy/Presidio model, unlike that one, since guardrails are a
+# retrieval-side concern this repo never imports.
+#
+# Build it from the REPOSITORY ROOT:
+#
+#     docker build -f Dockerfile.lambda -t rag-ingestion-lambda:local .
+#
+# AWS's own Python base image implements the Lambda Runtime API - unlike a
+# plain python:3.12-slim server image, this one is NOT long-running, so
+# there's no uvicorn, no HEALTHCHECK, no EXPOSE.
+FROM public.ecr.aws/lambda/python:3.12
+
+# git - needed because requirements.txt installs hrb-common-libs straight
+# from its GitHub tag (git+https://...); the base image has no git by default.
+RUN dnf install -y git
+
+# requirements.txt copied on its own first - an ordinary code edit reuses this layer.
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/requirements.txt
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# src/rag_ingestion lands directly under LAMBDA_TASK_ROOT (already on
+# sys.path in this base image) so `import rag_ingestion` resolves the same
+# way pytest.ini's own pythonpath=src makes it resolve locally.
+COPY src/rag_ingestion ${LAMBDA_TASK_ROOT}/rag_ingestion
+
+# Lambda's container runtime calls this as module.function.
+CMD ["rag_ingestion.lambda_handler.lambda_handler"]
