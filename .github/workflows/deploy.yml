@@ -1,0 +1,107 @@
+name: Deploy
+
+# Real AWS resources provisioned 2026-10-23: ECR repo, IAM deploy user
+# (rag-ingestion-service-github-actions-deploy, scoped to just this
+# repo/service), App Runner service (rag-ingestion-service - the sync
+# container path; the async Lambda path is separate and already live),
+# access + instance roles. Confirmed via a real deploy run and a live
+# GET /documents call returning real production data.
+#
+# Only master triggers this - a push to any other branch never reaches AWS.
+
+on:
+  push:
+    branches: ["master"]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: 418884736369.dkr.ecr.us-east-1.amazonaws.com/rag-ingestion-service
+  APP_RUNNER_SERVICE_ARN: arn:aws:apprunner:us-east-1:418884736369:service/rag-ingestion-service/b8964335a74d450e8c49fb0262b3b2a6
+  APP_RUNNER_URL: https://wkfgxanevz.us-east-1.awsapprunner.com
+
+jobs:
+  build-and-deploy:
+    name: Build, push, and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} \
+            | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY }}
+
+      - name: Build image
+        # --provenance=false --sbom=false --output oci-mediatypes=false: all
+        # three matter, not just the first two - hrb_chatbot_service's own
+        # Phase 10 found the hard way that losing any one of these
+        # reintroduces a real App Runner CREATE_FAILED bug (image pulls
+        # successfully, then silently never starts - zero application
+        # logs). push=false here deliberately - this step only builds, the
+        # next step re-runs this identical command with push=true (a
+        # BuildKit cache hit, not a second build) so the Pipeline UI can
+        # show build and push as two separately-timed stages.
+        run: |
+          docker buildx build \
+            --provenance=false --sbom=false \
+            --output type=image,name=${{ env.ECR_REPOSITORY }}:latest,oci-mediatypes=false,push=false \
+            .
+
+      - name: Push image to ECR
+        run: |
+          docker buildx build \
+            --provenance=false --sbom=false \
+            --output type=image,name=${{ env.ECR_REPOSITORY }}:latest,oci-mediatypes=false,push=true \
+            .
+
+      - name: Trigger App Runner deployment
+        # AutoDeploymentsEnabled should be set false on this service (same
+        # choice as hrb_chatbot_service's own Phase 10) - pushing a new
+        # image to ECR alone must not redeploy it, this explicit call does.
+        run: |
+          aws apprunner start-deployment --service-arn "${{ env.APP_RUNNER_SERVICE_ARN }}"
+
+      - name: Wait for the new deployment to actually reach RUNNING
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn "${{ env.APP_RUNNER_SERVICE_ARN }}" \
+              --query "Service.Status" --output text)
+            echo "App Runner status: $STATUS (check $i/30)"
+            if [ "$STATUS" = "RUNNING" ]; then
+              exit 0
+            fi
+            if [ "$STATUS" != "OPERATION_IN_PROGRESS" ]; then
+              echo "::error::App Runner reported unexpected status '$STATUS' - deployment did not reach RUNNING"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Timed out waiting for App Runner to reach RUNNING after 5 minutes"
+          exit 1
+
+      - name: Deployment smoke test - the new container actually answers
+        run: |
+          curl --fail --silent --show-error "${{ env.APP_RUNNER_URL }}/ping"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### :white_check_mark: Deployment succeeded" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### :x: Deployment failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- App Runner URL: ${{ env.APP_RUNNER_URL }}"
+            echo "- Triggered by: ${{ github.actor }}"
+          } >> "$GITHUB_STEP_SUMMARY"
