@@ -17,6 +17,39 @@ Dashboard document-upload feature. To see it work: log in as an `hr_support`
 persona (e.g. `EMP051` / Hana Support) and upload a PDF from the Admin
 Dashboard, or watch an S3 upload trigger the async Lambda path.
 
+## Tech stack at a glance
+
+```mermaid
+flowchart TD
+    HUB((hrb_rag_ingestion_service))
+    HUB --> FW[Framework]
+    HUB --> CH[Chunking]
+    HUB --> EMB[Embeddings]
+    HUB --> DEP[Deployment]
+
+    FW --> FW1[FastAPI]
+    FW --> FW2[Uvicorn]
+    CH --> CH1[LangChain Splitters]
+    CH --> CH2[7 auto-selected strategies]
+    EMB --> E1[text-embedding-3-small]
+    EMB --> E2[Embedding cache]
+    DEP --> D1[AWS App Runner - sync]
+    DEP --> D2[AWS Lambda - async, SQS-triggered]
+
+    classDef hub fill:#4C1D95,color:#fff,stroke:#2E1065,stroke-width:2px
+    classDef fw fill:#1D4ED8,color:#fff,stroke:#1E3A8A
+    classDef ch fill:#047857,color:#fff,stroke:#064E3B
+    classDef emb fill:#B45309,color:#fff,stroke:#78350F
+    classDef dep fill:#475569,color:#fff,stroke:#1E293B
+    class HUB hub
+    class FW,FW1,FW2 fw
+    class CH,CH1,CH2 ch
+    class EMB,E1,E2 emb
+    class DEP,D1,D2 dep
+```
+
+See the detailed "Tech stack" table below for exact package names and versions.
+
 ## Quick start
 
 ```bash
