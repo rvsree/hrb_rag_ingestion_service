@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-The ingestion half of the HRB chatbot's RAG pipeline, extracted as its own repo out of `hrb_chatbot_service`'s current monolith: extract PDF text -> chunk -> embed -> index, plus the document-metadata/dedup/supersedes logic around it. Retrieval (decompose -> retrieve -> generate, agentic modes, HITL, memory) is a separate future service, `rag_retrieval_service` - not built yet, and not this repo's concern.
+The ingestion half of the HRB chatbot's RAG pipeline, extracted as its own repo out of `hrb_chatbot_service`'s current monolith: extract PDF text -> chunk -> embed -> index, plus the document-metadata/dedup/supersedes logic around it. Retrieval (decompose -> retrieve -> generate, agentic modes, HITL, memory) is a separate sibling service, `hrb_rag_retrieval_service` - not this repo's concern.
 
 Full design lives in `hrb_chatbot_service`'s own `docs/dev-reference/rag-ingestion/` doc set (`overview.html`, `spec.html`, `architecture.html`, `design.html`, `decisions.html`) and `docs/dev-reference/service-boundary-decision.html`/`microservices-rollout-plan.html` - read those before changing anything here.
 
