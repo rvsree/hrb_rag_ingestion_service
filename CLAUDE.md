@@ -37,7 +37,7 @@ pytest -v
 
 Ports `hrb_chatbot_service`'s `ai/doc_processing/**` pipeline (chunking via LangChain splitters, embedding, indexing via LlamaIndex's `VectorStoreIndex` - see that repo's own CLAUDE.md for why each stage uses a different library), `services/documents_service.py`'s dedup/supersedes/file-validation logic, and the upload/list/get/delete routes from `api/rag/ingest_document.py`. Document metadata lives in the `hrb_rag_ingestion` Postgres schema (split out in `hrb_chatbot_service`'s own Phase 251 schema migration) - **not** `doc_metadata_store.py`, which tracks an unrelated admin docs-sync-to-S3 feature and stays in `hrb_chatbot_service`.
 
-Depends on `hrb-common-libs`' `db`, `vectorstore`, `llm`, and `storage` extras - all four already built there (Phases 2/4/6/11-13).
+Depends on `hrb_common_libs`' `db`, `vectorstore`, `llm`, and `storage` extras - all four already built there (Phases 2/4/6/11-13).
 
 ## Spec-Driven Development
 

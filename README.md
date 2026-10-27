@@ -26,7 +26,7 @@ Tests: `pytest tests/ -v` from the repo root.
 | Framework | FastAPI + Uvicorn |
 | Chunking | LangChain text splitters (`langchain-text-splitters`, `langchain-experimental`) - 7 real strategies, auto-selected per document |
 | Embeddings | `langchain-openai`, `text-embedding-3-small` default, with an embedding cache |
-| Shared code | `hrb-common-libs[observability,db,vectorstore,llm,storage,cache]`, pinned to `v0.4.0` |
+| Shared code | `hrb_common_libs[observability,db,vectorstore,llm,storage,cache]`, pinned to `v0.4.0` |
 | Sync deploy | AWS App Runner (Docker, 2-stage build), 256 CPU / 512 Memory |
 | Async deploy | AWS Lambda, container image, 3008 MB memory, 300s timeout, SQS-triggered |
 

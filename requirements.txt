@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 pydantic
 python-multipart==0.0.20
-hrb-common-libs[observability,db,vectorstore,llm,storage,cache] @ git+https://github.com/rvsree/hrb-common-libs.git@v0.4.0
+hrb_common_libs[observability,db,vectorstore,llm,storage,cache] @ git+https://github.com/rvsree/hrb_common_libs.git@v0.4.0
 
 # PDF extraction
 pypdf==6.1.1
