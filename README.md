@@ -45,10 +45,10 @@ See `ROADMAP.md` for phase history, including 2 earlier real bugs found and fixe
 
 | Doc | What it covers |
 |---|---|
-| [Overview / Spec / Architecture / Design / Decisions / Interview FAQ](../hrb_chatbot_service/docs/dev-reference/hrb_chatbot_v3/rag-pipeline/ingestion/rag-ingestion/) | The full HTML doc set for this service |
-| [Build process](../hrb_chatbot_service/docs/dev-reference/hrb_chatbot_v3/deployment-and-ops/build-and-deploy/04a-rag-ingestion-service-build-process.html) | Docker build, step-by-step, both real deploy targets covered |
-| [Deployment architecture (HTML)](../hrb_chatbot_service/docs/dev-reference/hrb_chatbot_v3/deployment-and-ops/build-and-deploy/04b-rag-ingestion-service-deployment-architecture.html) | Same content as the `.drawio` above, narrative form |
-| [`microservices-rollout-plan.html`](../hrb_chatbot_service/docs/dev-reference/hrb_chatbot_v3/architecture/microservices-rollout-plan.html) | Why ingestion was split out first, in dependency order |
-| [`platform-overview.html`](../hrb_chatbot_service/docs/dev-reference/hrb_chatbot_v3/architecture/platform-overview.html) | The cross-service hub - business capabilities, all 7 repos, one diagram |
+| [Overview / Spec / Architecture / Design / Decisions / Interview FAQ](../docs/rag-pipeline/ingestion/rag-ingestion/) | The full HTML doc set for this service |
+| [Build process](../docs/deployment-and-ops/build-and-deploy/04a-rag-ingestion-service-build-process.html) | Docker build, step-by-step, both real deploy targets covered |
+| [Deployment architecture (HTML)](../docs/deployment-and-ops/build-and-deploy/04b-rag-ingestion-service-deployment-architecture.html) | Same content as the `.drawio` above, narrative form |
+| [`microservices-rollout-plan.html`](../docs/architecture/microservices-rollout-plan.html) | Why ingestion was split out first, in dependency order |
+| [`platform-overview.html`](../docs/architecture/platform-overview.html) | The cross-service hub - business capabilities, all 7 repos, one diagram |
 
 Older paths under `docs/dev-reference/rag-ingestion/` (no `hrb_chatbot_v3/` prefix) referenced in earlier commits are stale - that folder was reorganized 2026-10-23, and the links above reflect the real current location.
