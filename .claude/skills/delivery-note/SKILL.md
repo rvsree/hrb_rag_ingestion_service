@@ -2,7 +2,7 @@
 name: delivery-note
 description: >
   Generate a concise delivery note after finishing a task on
-  rag_ingestion_service. Invoke automatically at the end of a task, or
+  hrb_rag_ingestion_service. Invoke automatically at the end of a task, or
   explicitly as /delivery-note.
 allowed-tools: Bash(git diff --stat *) Bash(git status --short *)
 ---

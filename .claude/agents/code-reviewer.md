@@ -10,7 +10,7 @@ Check specifically:
 1. **No retrieval/agent logic leaking in** - this repo is ingestion-only
    (extract/chunk/embed/index + metadata/dedup). Anything resembling
    query decomposition, retrieval, agent orchestration, or guardrails
-   belongs to `rag_retrieval_service`, not here.
+   belongs to `hrb_rag_retrieval_service`, not here.
 2. **`doc_metadata_store.py`'s table stays out of scope** - it tracks an
    unrelated admin docs-sync-to-S3 feature (`hrb_admin_controls` schema in
    `hrb_chatbot_service`), not RAG document metadata. Don't let it get
